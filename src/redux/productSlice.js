@@ -1,49 +1,40 @@
-import { createSlice } from "@reduxjs/toolkit";
-
-export const STATUSES=Object.freeze({
-    IDLE:'Idle',
-    LOADING:'Loading',
-    ERROR:'Error'
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+export const STATUSES = Object.freeze({
+    IDLE: 'idle',
+    ERROR: 'error',
+    LOADING: 'loading',
 });
+const initialState = {
+  data: [],
+  status: STATUSES.IDLE,
+};
 
-const productSlice=createSlice({
+export const productSlice=createSlice({
     name:'product',
-    initialState:{
-        data:[],
-        status:STATUSES.IDLE,
+    initialState,
+    extraReducers: (builder) => {
+        builder
+            .addCase(fatchProducts.pending, (state, action) => {
+                state.status = STATUSES.LOADING;
+            })
+            .addCase(fatchProducts.fulfilled, (state, action) => {
+                state.data = action.payload;
+                state.status = STATUSES.IDLE;
+            })
+            .addCase(fatchProducts.rejected, (state, action) => {
+                state.status = STATUSES.ERROR;
+            })
+         
     },
-    reducers:{
-       setProducts(state,action){
-        state.data=action.payload;
-       },
-       setStatus(state,action){
-           state.status=action.payload;
-       }
+})
 
-    }
-});
-
-export const {setProducts,setStatus}=productSlice.actions;
 export default productSlice.reducer;
 
-//thunks
+export const fatchProducts=createAsyncThunk('products/fatch',async()=>{
+    const res = await fetch('https://dummyjson.com/products/');
+    const data = await res.json();
+    // console.log(data.products)
+    return data.products;
+});
 
-
-
-
-
-export function productThunk(){
-    return async function productThunkSub(dispatch){
-        dispatch(setStatus(STATUSES.LOADING))
-        try {
-            const res = await fetch('https://fakestoreapi.com/products');
-            const data=await res.json();
-            dispatch(setProducts(data));
-            dispatch(setStatus(STATUSES.IDLE))
-        } catch (error) {
-            console.log(error)
-            dispatch(setStatus(STATUSES.ERROR))
-        }
-    }
-}
 
